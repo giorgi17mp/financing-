@@ -1,0 +1,11 @@
+{
+  "name": "Finance",
+  "short_name": "Finance",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#2563eb",
+  "lang": "ka",
+  "description": "პირადი ფინანსების დებიტი, კრედიტი, საქართველო და რემაინდერები"
+}

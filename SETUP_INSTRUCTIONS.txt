@@ -1,0 +1,45 @@
+FINANCE — HTTPS + GOOGLE DRIVE BACKUP
+
+A) GOOGLE DRIVE BACKUP
+1. Open https://script.google.com/ and create a New project.
+2. Replace the default code with GoogleDriveBackup.gs from this folder.
+3. Save the project.
+4. Deploy -> New deployment -> Select type: Web app.
+5. Execute as: Me.
+6. Who has access: Anyone.
+7. Deploy and authorize Google Drive access when Google asks.
+8. Copy the Web app URL ending in /exec.
+9. Open Finance -> Settings -> Backup.
+10. Paste the Web app URL into "Cloud backup URL".
+11. Paste this secret token into "Backup secret token":
+
+e5PdmWkxxGRXdt8kBqVJuzOK-DgXrFZgkcXbvvo9_nI
+
+12. Press "Cloud URL-ის შენახვა".
+13. Make one small test change in Finance. The app will automatically POST a backup.
+14. In Google Drive, a folder named FinanceAppBackups will appear. It contains finance_latest.json and up to 30 historical backups.
+
+IMPORTANT:
+- Keep the secret token private.
+- Do not put the backup files themselves in GitHub.
+- The app's local data stays on the phone; the cloud copy is an additional backup.
+- The Apps Script web app is intentionally deployed as "Execute as me" so it can write to your Drive.
+
+B) HTTPS / PWA WITH GITHUB PAGES
+1. Create a GitHub repository, e.g. finance-dashboard.
+2. Upload ALL files from this folder:
+   index.html
+   manifest.webmanifest
+   sw.js
+   icon-192.png
+   icon-512.png
+3. In GitHub: Settings -> Pages.
+4. Source: Deploy from a branch.
+5. Branch: main; Folder: / (root); Save.
+6. Wait for the Pages URL, normally:
+   https://YOUR_USERNAME.github.io/finance-dashboard/
+7. Open that HTTPS URL on Android Chrome.
+8. Chrome menu -> Install app (or Add to Home screen).
+9. Launch the Finance icon from the Home Screen. It should open in standalone app mode without the browser address bar.
+
+GitHub Pages github.io sites are served over HTTPS automatically. Do NOT upload finance data or backup JSON files to the repository.
