@@ -3,7 +3,7 @@ self.addEventListener('notificationclick',event=>{event.stopImmediatePropagation
 self.addEventListener('message',event=>{if(event.data?.type==='ACTIVATE_PUSH')self.skipWaiting();});
 importScripts('./fcm-worker.js');
 /* App files only; financial data never enters the HTTP cache. */
-const CACHE='finance-pwa-v8-focus-2';
+const CACHE='finance-pwa-v8-focus-3';
 const FILES=['./index.html','./storage.js','./reminder-core.js','./experience.js','./fcm-client.js','./fcm-worker.js','./hash-support.js','./app.js','./upgrade.css','./manifest.webmanifest','./icon-192.png','./icon-512.png','./setup.html','./GoogleDriveBackupV3.gs'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(path=>new Request(new URL(path,self.registration.scope).href,{cache:'reload'}))))));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('finance-pwa-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));

@@ -23,7 +23,7 @@ Bundled Firebase Cloud Messaging supports background/closed-app delivery and a f
 
 ## Validation
 
-37 automated tests cover atomic failure, migration, concurrent tabs, checksums, independent backup failures, backend idempotency, reminder rollover/deduplication, direct GEL income, account entry shortcuts, opening-balance edits and duplicate-expense prevention. Backend tests mock external services. Browser QA uses synthetic records at 390px mobile width. Service-worker tests verify reload-cache installation, canonical index navigation (including version query strings), and scoped cache cleanup. Root navigation never reuses a separate stale cached home document.
+39 automated tests cover atomic failure, migration, concurrent tabs, checksums, independent backup failures, backend idempotency, reminder rollover/deduplication, direct GEL income, account entry shortcuts, opening-balance edits and duplicate-expense prevention. Backend tests mock external services. Browser QA uses synthetic records at 390px mobile width. Service-worker tests verify reload-cache installation, canonical index navigation (including version query strings), and scoped cache cleanup. Root navigation never reuses a separate stale cached home document. update.html is an uncached, standalone updater for older installed app caches; it explicitly checks/activates the worker without clearing any storage.
 
 Run `npm ci && npm test`. `npm run build:push` rebuilds the vendored Firebase client and worker bundles. Apache 2.0 license: FIREBASE_LICENSE.txt. No runtime CDN scripts.
 
