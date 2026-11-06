@@ -33,7 +33,19 @@ function financeHourly(){var lock=LockService.getScriptLock();if(!lock.tryLock(1
  if(p.getProperty('DROPBOX_REFRESH_TOKEN')){var files=folder_().getFiles(),attempted=0;while(files.hasNext()&&attempted<5){var f=files.next();if(!/^finance-.*\.json$/.test(f.getName())||String(f.getDescription()||'').indexOf('finance-dropbox-verified:')===0)continue;attempted++;try{var pending=JSON.parse(f.getBlob().getDataAsString('UTF-8'));validateBackup_(pending);saveDropbox_(pending,f);}catch(ignore){}}}
  }finally{lock.releaseLock();}}
 // Owner-only setup helper: no secret is logged. Get code from Dropbox's authorization page.
-function connectDropboxOnce(){var p=props_(),code=p.getProperty('DROPBOX_AUTH_CODE'),key=p.getProperty('DROPBOX_APP_KEY'),secret=p.getProperty('DROPBOX_APP_SECRET');if(!code||!key||!secret)throw Error('Set DROPBOX_APP_KEY, DROPBOX_APP_SECRET and DROPBOX_AUTH_CODE in Script Properties');var res=UrlFetchApp.fetch('https://api.dropbox.com/oauth2/token',{method:'post',payload:{grant_type:'authorization_code',code:code,client_id:key,client_secret:secret},muteHttpExceptions:true});if(res.getResponseCode()!==200)throw Error('Authorization code expired or invalid. Generate a new code.');var tokens=JSON.parse(res.getContentText());if(!tokens.refresh_token)throw Error('Request token_access_type=offline');p.setProperty('DROPBOX_REFRESH_TOKEN',tokens.refresh_token);p.deleteProperty('DROPBOX_AUTH_CODE');}
+function connectDropboxOnce(){
+  var p=props_(),code=(p.getProperty('DROPBOX_AUTH_CODE')||'').trim(),key=(p.getProperty('DROPBOX_APP_KEY')||'').trim(),secret=(p.getProperty('DROPBOX_APP_SECRET')||'').trim();
+  if(!code||!key||!secret||/^PASTE_/.test(code)||/^PASTE_/.test(secret))throw Error('Fill DROPBOX_APP_KEY, DROPBOX_APP_SECRET and DROPBOX_AUTH_CODE in Script Properties');
+  var res=UrlFetchApp.fetch('https://api.dropbox.com/oauth2/token',{method:'post',payload:{grant_type:'authorization_code',code:code,client_id:key,client_secret:secret},muteHttpExceptions:true}),status=res.getResponseCode(),tokens;
+  try{tokens=JSON.parse(res.getContentText());}catch(e){throw Error('Dropbox returned an unreadable response (HTTP '+status+').');}
+  if(status!==200){
+    if(tokens.error==='invalid_client')throw Error('Dropbox rejected the app key or app secret (invalid_client). Check DROPBOX_APP_KEY and DROPBOX_APP_SECRET.');
+    if(tokens.error==='invalid_grant')throw Error('Dropbox rejected the one-time authorization code (invalid_grant). It may be expired, already used, or from another app.');
+    throw Error('Dropbox connection failed (HTTP '+status+'). No credentials were changed.');
+  }
+  if(!tokens.refresh_token)throw Error('Request token_access_type=offline');
+  p.setProperty('DROPBOX_REFRESH_TOKEN',tokens.refresh_token);p.deleteProperty('DROPBOX_AUTH_CODE');
+}
 
 // OWNER ONLY: run manually in the editor. Never callable through doPost.
 // Creates a private credential without placing it in source code or logs.
