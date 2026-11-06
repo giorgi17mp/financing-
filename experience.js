@@ -26,7 +26,7 @@ async function unmarkReminder(id,period){if(!confirm('მოიხსნებ�
 async function snoozeReminder(id){const tomorrow=new Date(todayStr()+'T12:00:00Z');tomorrow.setUTCDate(tomorrow.getUTCDate()+1);if(await mutate('reminder-snooze',s=>s.reminders.find(r=>r.id===id).snoozeUntil=tomorrow.toISOString().slice(0,10))){closeModal('toolsModal');renderReminderManager();}}
 // Independent copies: localStorage is a mirror on the SAME device, not another destination.
 function protectionState(){const id=store?.current?.backupId;return {phone:!!id,google:!!id&&safeGet('finance_v7_cloud_ack')===id,dropbox:!!id&&safeGet('finance_v8_dropbox_ack')===id};}
-function updateBackupStatus(){if(!store?.current)return;const p=protectionState(),count=Object.values(p).filter(Boolean).length,e=store.current;const cards=[['phone','ამ ტელეფონში',store.mirrorWarning||'ძირითადი საცავი და ადგილობრივი სარეზერვო ასლი'],['google','Google Drive',cloudMessage||'ონლაინ კავშირი შესამოწმებელია'],['dropbox','Dropbox',safeGet('finance_v8_dropbox_error')||'დამოუკიდებელი მესამე ასლი']];$('protectionCards').innerHTML=cards.map(([key,title,note])=>'<div class="protectionRow"><span class="copyIcon '+(p[key]?'verified':'pending')+'">'+(p[key]?'✓':'○')+'</span><span><b>'+title+'</b><small>'+esc(p[key]?'მიმდინარე ვერსია დადასტურებულია':note)+'</small></span><span class="badge '+(p[key]?'paid':'upcoming')+'">'+(p[key]?'მზადაა':'მოლოდინში')+'</span></div>').join('')+'<p class="hint">'+count+'/3 დამოუკიდებელი ადგილი დადასტურებულია. ბრაუზერის ორი საცავი ერთ ადგილად ითვლება. გარე ასლები ჩართვის შემდეგ იგზავნება, როცა აპი გახსნილია; დაუდასტურებელი გაგზავნა ხელახლა სცდება.</p><div class="inlineButtons"><button class="pill" onclick="retryBackups()">გადამოწმება / გაგზავნა</button><button class="pill" onclick="shareBackup()">JSON ასლის გაზიარება</button><a class="pill" href="setup.html" target="_blank" rel="noopener">დაკავშირების ინსტრუქცია</a></div>';
+function updateBackupStatus(){updateCloudControls();if(!store?.current)return;const p=protectionState(),count=Object.values(p).filter(Boolean).length,e=store.current;const cards=[['phone','ამ ტელეფონში',store.mirrorWarning||'ძირითადი საცავი და ადგილობრივი სარეზერვო ასლი'],['google','Google Drive',cloudMessage||'ონლაინ კავშირი შესამოწმებელია'],['dropbox','Dropbox',safeGet('finance_v8_dropbox_error')||'დამოუკიდებელი მესამე ასლი']];$('protectionCards').innerHTML=cards.map(([key,title,note])=>'<div class="protectionRow"><span class="copyIcon '+(p[key]?'verified':'pending')+'">'+(p[key]?'✓':'○')+'</span><span><b>'+title+'</b><small>'+esc(p[key]?'მიმდინარე ვერსია დადასტურებულია':note)+'</small></span><span class="badge '+(p[key]?'paid':'upcoming')+'">'+(p[key]?'მზადაა':'მოლოდინში')+'</span></div>').join('')+'<p class="hint">'+count+'/3 დამოუკიდებელი ადგილი დადასტურებულია. ბრაუზერის ორი საცავი ერთ ადგილად ითვლება. გარე ასლები ჩართვის შემდეგ იგზავნება, როცა აპი გახსნილია; დაუდასტურებელი გაგზავნა ხელახლა სცდება.</p><div class="inlineButtons"><button class="pill" onclick="retryBackups()">გადამოწმება / გაგზავნა</button><button class="pill" onclick="shareBackup()">JSON ასლის გაზიარება</button><a class="pill" href="setup.html" target="_blank" rel="noopener">დაკავშირების ინსტრუქცია</a></div>';
 $('backupStatus').textContent='ბოლო შენახვა: '+new Date(e.at).toLocaleString('ka-GE')+' · '+data.length+' ჩანაწერი · ვერსია '+e.revision+(store.mirrorWarning?'\n'+store.mirrorWarning:'');$('storageBanner').className='storageBanner compactStatus'+(store.mirrorWarning?' error':count<3?' warn':'');$('storageBanner').innerHTML='<span class="statusDot"></span><span>'+(store.mirrorWarning?'ასლი შესამოწმებელია':'ტელეფონში შენახულია')+'</span><button onclick="openSettings()">ასლები '+count+'/3 <span>›</span></button>';
 }
 async function retryBackups(){backupRetryAt=0;backupFailures=0;localStorage.removeItem('finance_v8_dropbox_ack');await syncCloud(true);}
@@ -49,3 +49,25 @@ async function testPhoneNotification(){try{const ack=await cloudRequest({action:
 async function disconnectPhoneNotifications(){try{await cloudRequest({action:'unsubscribe',deviceId:getDeviceId()});await FinancePush.disconnect(readPushConfig());localStorage.removeItem('finance_v8_push_registered');openNotificationSettings();}catch(e){fail(e);}}
 navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='OPEN_REMINDERS'&&ready)openReminderManager();});
 void initialize().then(()=>{if(ready)void resumePhoneNotifications();if(ready&&new URL(location.href).searchParams.get('reminders')==='1')openReminderManager();});
+
+// Connection feedback stays beside the action, including on small screens.
+function updateCloudControls(){
+ const btn=$('saveCloudButton'),status=$('cloudInlineStatus'),db=$('connectDropboxButton');
+ if(btn){btn.disabled=cloudBusy;btn.textContent=cloudBusy?'მოწმდება…':'შენახვა და შემოწმება';}
+ for(const id of ['cloudUrl','cloudToken'])if($(id))$(id).disabled=cloudBusy;
+ if(status)status.textContent=cloudBusy?'ასლები იგზავნება და მოწმდება. დაელოდე პასუხს…':cloudMessage||'შეინახე მისამართი და გადაამოწმე კავშირი.';
+ if(db){db.disabled=cloudBusy||dropboxConnecting;db.textContent=dropboxConnecting?'Dropbox იხსნება…':'Dropbox-ის დაკავშირება';}
+}
+let dropboxConnecting=false;
+async function connectDropbox(){
+ if(dropboxConnecting||cloudBusy)return;
+ dropboxConnecting=true;updateCloudControls();
+ try{
+  const info=await cloudRequest({action:'dropbox-connect'}),url=new URL(info.authorizeUrl);
+  if(url.origin!=='https://www.dropbox.com'||url.pathname!=='/oauth2/authorize'||url.searchParams.get('response_type')!=='code')throw Error('Dropbox-ის უსაფრთხო მისამართი ვერ დადასტურდა');
+  window.location.assign(url.href);
+ }catch(e){cloudMessage=e.message||'Dropbox-ის დაკავშირება ვერ დაიწყო';fail(e);}
+ finally{dropboxConnecting=false;updateCloudControls();}
+}
+window.addEventListener('pageshow',()=>{if(new URLSearchParams(location.search).has('backups')){openSettings();void retryBackups();}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&ready)void syncCloud();});
