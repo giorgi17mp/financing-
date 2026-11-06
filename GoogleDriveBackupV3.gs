@@ -34,3 +34,21 @@ function financeHourly(){var lock=LockService.getScriptLock();if(!lock.tryLock(1
  }finally{lock.releaseLock();}}
 // Owner-only setup helper: no secret is logged. Get code from Dropbox's authorization page.
 function connectDropboxOnce(){var p=props_(),code=p.getProperty('DROPBOX_AUTH_CODE'),key=p.getProperty('DROPBOX_APP_KEY'),secret=p.getProperty('DROPBOX_APP_SECRET');if(!code||!key||!secret)throw Error('Set DROPBOX_APP_KEY, DROPBOX_APP_SECRET and DROPBOX_AUTH_CODE in Script Properties');var res=UrlFetchApp.fetch('https://api.dropbox.com/oauth2/token',{method:'post',payload:{grant_type:'authorization_code',code:code,client_id:key,client_secret:secret},muteHttpExceptions:true});if(res.getResponseCode()!==200)throw Error('Authorization code expired or invalid. Generate a new code.');var tokens=JSON.parse(res.getContentText());if(!tokens.refresh_token)throw Error('Request token_access_type=offline');p.setProperty('DROPBOX_REFRESH_TOKEN',tokens.refresh_token);p.deleteProperty('DROPBOX_AUTH_CODE');}
+
+// OWNER ONLY: run manually in the editor. Never callable through doPost.
+// Creates a private credential without placing it in source code or logs.
+function setupFinanceOnce(){
+ var lock=LockService.getScriptLock();lock.waitLock(25000);
+ try{
+  var p=props_(),token=p.getProperty('FINANCE_TOKEN');
+  if(token&&token.length<32)throw Error('FINANCE_TOKEN must contain at least 32 characters');
+  if(!p.getProperty('FINANCE_FOLDER_ID')){
+   var old=DriveApp.getFoldersByName('FinanceAppBackups');
+   if(old.hasNext()){var folder=old.next();if(old.hasNext())throw Error('Multiple FinanceAppBackups folders: select FINANCE_FOLDER_ID explicitly');p.setProperty('FINANCE_FOLDER_ID',folder.getId());}
+  }
+  folder_();
+  if(!token)p.setProperty('FINANCE_TOKEN',Utilities.getUuid().replace(/-/g,'')+Utilities.getUuid().replace(/-/g,''));
+  if(!schedulerEnabled_())ScriptApp.newTrigger('financeHourly').timeBased().everyHours(1).create();
+  return 'Setup complete. FINANCE_TOKEN is stored privately in Script Properties. Connect the phone and verify its first backup.';
+ }finally{lock.releaseLock();}
+}
