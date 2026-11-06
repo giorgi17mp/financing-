@@ -1,45 +1,45 @@
-FINANCE — HTTPS + GOOGLE DRIVE BACKUP
+Finance — არსებული აპის განახლება v7
 
-A) GOOGLE DRIVE BACKUP
-1. Open https://script.google.com/ and create a New project.
-2. Replace the default code with GoogleDriveBackup.gs from this folder.
-3. Save the project.
-4. Deploy -> New deployment -> Select type: Web app.
-5. Execute as: Me.
-6. Who has access: Anyone.
-7. Deploy and authorize Google Drive access when Google asks.
-8. Copy the Web app URL ending in /exec.
-9. Open Finance -> Settings -> Backup.
-10. Paste the Web app URL into "Cloud backup URL".
-11. Paste this secret token into "Backup secret token":
+იგივე მისამართი და იგივე ბრაუზერი გამოიყენე. ბრაუზერის მონაცემები არ გაასუფთავო.
+ძველი finance_final_*_v6 ჩანაწერები ერთჯერადად გადაიტანება ახალ საცავში.
+ძველი გასაღებები უცვლელად დარჩება; პირადი ისტორია HTML-ში აღარ არის ჩაშენებული.
+თუ ძველი მონაცემი ვერ იკითხება, ავტომატური ჩანაცვლება შეჩერდება.
 
-e5PdmWkxxGRXdt8kBqVJuzOK-DgXrFZgkcXbvvo9_nI
+ადგილობრივი დაცვა
+• IndexedDB-ში ერთიანი ტრანზაქცია, SHA-256 შემოწმება, ვერსიების ისტორია.
+• localStorage-ში დამატებითი ასლი; ბრაუზერის მონაცემების წაშლა ორივეს წაშლის.
+• შეინახე JSON ფაილი Google Drive-ში ან სხვა მოწყობილობაზე პერიოდულად.
+• CSV მხოლოდ ცხრილის ექსპორტია; აღდგენისთვის გამოიყენე JSON.
+• ახალ ვერსიას სჭირდება თანამედროვე HTTPS ბრაუზერი, არა ჩამოტვირთული file:// HTML.
 
-12. Press "Cloud URL-ის შენახვა".
-13. Make one small test change in Finance. The app will automatically POST a backup.
-14. In Google Drive, a folder named FinanceAppBackups will appear. It contains finance_latest.json and up to 30 historical backups.
+Google Drive ონლაინ ასლის ერთჯერადი განახლება
+1. გახსენი შენი არსებული Google Apps Script პროექტი.
+2. ჩაანაცვლე სკრიპტი ამავე რეპოზიტორიის GoogleDriveBackupV2.gs ფაილით.
+3. Project Settings → Script properties-ში დაამატე FINANCE_TOKEN:
+   ახალი, შემთხვევითი, მინიმუმ 32 სიმბოლო. არ ჩაწერო ტოკენი საჯარო კოდში.
+   ძველი საჯაროდ გაზიარებული ტოკენი აღარ გამოიყენო.
+4. Deploy → Manage deployments → Edit → New version → Deploy.
+   Execute as: Me. Who has access: Anyone. წვდომა ჩაიწერება მხოლოდ სწორი ტოკენით.
+   პირველად ავტორიზაცია მიეცი შენსავე Google Drive-ზე.
+5. აპში პარამეტრები → ონლაინ Backup: ჩაწერე /exec URL და ახალი პირადი ტოკენი.
+6. დაელოდე „ონლაინ ასლი დადასტურებულია“ სტატუსს. თუ არ ჩანს, ასლი დადასტურებული არ არის.
 
-IMPORTANT:
-- Keep the secret token private.
-- Do not put the backup files themselves in GitHub.
-- The app's local data stays on the phone; the cloud copy is an additional backup.
-- The Apps Script web app is intentionally deployed as "Execute as me" so it can write to your Drive.
+სკრიპტი ქმნის კერძო FinanceAppBackupsV2 საქაღალდეს შენს Drive-ში.
+ყოველი გაგზავნა ცალკე JSON ფაილია, იგივე ID-ით გამეორებული გაგზავნა დუბლიკატს არ ქმნის.
+ძველი ფაილები არ იშლება. Drive-ის სივრცე პერიოდულად შეამოწმე.
+აპი აგზავნის ბოლო მდგომარეობას, როდესაც გახსნილია და ინტერნეტი ხელმისაწვდომია.
+მოწყობილობის დაკარგვისგან დაცვა არსებობს მხოლოდ გარეთ რეალურად შენახული ასლისთვის.
 
-B) HTTPS / PWA WITH GITHUB PAGES
-1. Create a GitHub repository, e.g. finance-dashboard.
-2. Upload ALL files from this folder:
-   index.html
-   manifest.webmanifest
-   sw.js
-   icon-192.png
-   icon-512.png
-3. In GitHub: Settings -> Pages.
-4. Source: Deploy from a branch.
-5. Branch: main; Folder: / (root); Save.
-6. Wait for the Pages URL, normally:
-   https://YOUR_USERNAME.github.io/finance-dashboard/
-7. Open that HTTPS URL on Android Chrome.
-8. Chrome menu -> Install app (or Add to Home screen).
-9. Launch the Finance icon from the Home Screen. It should open in standalone app mode without the browser address bar.
+განახლების ნახვა
+თუ PWA ძველ ეკრანს აჩვენებს, დახურე ამ აპის ყველა ფანჯარა/ჩანართი და ხელახლა გახსენი.
+არ გამოიყენო Clear site data, Reset ან ხელახალი ინსტალაცია მონაცემების ექსპორტამდე.
 
-GitHub Pages github.io sites are served over HTTPS automatically. Do NOT upload finance data or backup JSON files to the repository.
+ფუნქციები
+• თვის მიმოხილვა, კატეგორიის ბიუჯეტები, USD/GEL ცალკე აღრიცხვა.
+• სრული საძიებო ისტორია, თვე/ტიპი ფილტრები, CSV.
+• ვადაგადაცილებული გადასახადები, GEL ხარჯი და მხოლოდ მონიშვნა.
+• წაშლილები, ვერსიაზე დაბრუნება, JSON შემოტანის წინასწარი ნახვა/გაერთიანება.
+• საწყისი ბალანსის თარიღისა და თანხების რედაქტირება.
+
+მნიშვნელოვანი: კოდი თავისით ვერ ჩართავს Google ანგარიშში ონლაინ ასლს.
+ვერც ერთი ბრაუზერული აპი ვერ იძლევა მონაცემის არასდროს დაკარგვის გარანტიას.
