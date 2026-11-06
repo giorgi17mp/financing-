@@ -1,3 +1,34 @@
+# Finance v8
+
+An in-place upgrade of the existing PWA. Same origin, manifest, IndexedDB database, legacy keys and versioned backup format. No real financial records or private credentials are bundled.
+
+## Daily use
+
+- Focused home: tappable debit, credit and GEL accounts; dual credit target/limit meters; quick entry; upcoming/overdue bills; calendar and recent five records. Full history and reports have separate tabs. No floating bottom plus.
+- Direct GEL income credits only the Georgia account. USD-to-GEL transfer remains a separate operation.
+- Compact reminder rows open details with record-and-mark, mark-only, snooze, edit and unmark. Unmark retains the ledger expense. Month-end dates clamp correctly; tracked overdue bills survive month rollover. Existing bills begin overdue tracking at upgrade month, avoiding fabricated historical debts.
+- Opening balances and their cutoff date can be edited from the top of Settings. Prior versions and ledger records are retained.
+
+## Three independent destinations
+
+The phone's IndexedDB and localStorage mirror count as ONE destination. Owner-deployed GoogleDriveBackupV3.gs writes immutable, checksummed versions to Google Drive and a scoped Dropbox App folder. Each remote destination gets independent read-back verification. An unavailable third destination never blocks verified Drive storage and is never marked successful. Failed phone sends retry; the optional hourly server trigger retries pending Dropbox copies. Read-back checks prove integrity, not encryption or guaranteed future availability.
+
+The home badge counts only acknowledgements for the current snapshot (1/3, 2/3, 3/3). Downloads and Web Share requests are not counted as confirmed external copies. Old external versions are retained; the owner must monitor storage quotas. Offline changes cannot reach external destinations until connectivity returns. Local browser data can be erased together; retaining external exports is still useful.
+
+## Phone notifications
+
+Bundled Firebase Cloud Messaging supports background/closed-app delivery and a foreground listener on every authorized launch. Owner-configured Apps Script uses a service account kept exclusively in private Script Properties, an hourly trigger, timezone-aware bill checks and per-device daily deduplication. Lock-screen text includes counts only. Permission, connectivity, OS delivery and service quotas still apply; HTTP acceptance is not handset receipt. Scheduling uses the last synced snapshot.
+
+**Activation required:** install the v3 script in the owner's Google account, authorize a Dropbox App folder with an offline refresh token, configure Firebase, install the hourly trigger, then enable/test notifications on the actual phone. See setup.html. No live cloud credentials, real-device notification receipt or 3/3 protection was verified during development. No Samsung Cloud integration is claimed.
+
+## Validation
+
+34 automated tests cover atomic failure, migration, concurrent tabs, checksums, independent backup failures, backend idempotency, reminder rollover/deduplication, direct GEL income, account entry shortcuts, opening-balance edits and duplicate-expense prevention. Backend tests mock external services. Browser QA uses synthetic records at 390px mobile width.
+
+Run `npm ci && npm test`. `npm run build:push` rebuilds the vendored Firebase client and worker bundles. Apache 2.0 license: FIREBASE_LICENSE.txt. No runtime CDN scripts.
+
+---
+
 # Finance v7
 
 This updates the existing Finance application and preserves its manifest, installation identity and URL.

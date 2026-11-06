@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "build:hash": "esbuild scripts/hash-entry.mjs --bundle --minify --format=iife --outfile=hash-support.js"
+    "build:hash": "esbuild scripts/hash-entry.mjs --bundle --minify --format=iife --outfile=hash-support.js",
+    "build:push": "esbuild scripts/fcm-client.mjs --bundle --minify --format=iife --outfile=fcm-client.js && esbuild scripts/fcm-worker.mjs --bundle --minify --format=iife --outfile=fcm-worker.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
     "@noble/hashes": "^2.4.0",
     "esbuild": "^0.28.2",
     "fake-indexeddb": "^6.2.7",
+    "firebase": "^13.2.0",
     "jsdom": "^31.0.0"
   }
 }

@@ -3,13 +3,14 @@
 'use strict';
 const KEY='finance_v7_mirror', DB='finance-durable-v7';
 const clone=x=>JSON.parse(JSON.stringify(x));
-const TYPES=['income','debit_expense','credit_expense','transfer_georgia','georgia_expense','credit_payment'];
+const TYPES=['income','debit_expense','credit_expense','transfer_georgia','georgia_expense','georgia_income','credit_payment'];
 function validDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return false;const d=new Date(s+'T12:00:00Z');return Number.isFinite(+d)&&d.toISOString().slice(0,10)===s;}
 const cents=n=>Math.round(Number(n)*100);
 function validate(s){
  if(!s||!Array.isArray(s.data)||!Array.isArray(s.reminders)||!s.settings||typeof s.settings!=='object'||!s.reminderPaid||typeof s.reminderPaid!=='object')throw Error('არასრული სარეზერვო ასლი');
  const ids=new Set();for(const e of s.data){if(!e||typeof e.id!=='string'||!/^[-_a-zA-Z0-9]+$/.test(e.id)||ids.has(e.id))throw Error('განმეორებული ან არასწორი ჩანაწერის ID');ids.add(e.id);if(!TYPES.includes(e.type)||typeof e.amount!=='number'||!Number.isFinite(e.amount)||e.amount<0||Math.abs(e.amount)>1e10||typeof e.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))throw Error('არასწორი ჩანაწერი: '+e.id);if(e.gelAmount!=null&&(typeof e.gelAmount!=='number'||!Number.isFinite(e.gelAmount)||e.gelAmount<0))throw Error('არასწორი GEL თანხა');}
  const rids=new Set();for(const r of s.reminders){if(!r||typeof r.id!=='string'||!/^[-_a-zA-Z0-9]+$/.test(r.id)||rids.has(r.id)||typeof r.name!=='string'||!Number.isInteger(r.day)||r.day<1||r.day>31||!['USD','GEL'].includes(r.currency)||!(r.amount===''||(typeof r.amount==='number'&&Number.isFinite(r.amount)&&r.amount>=0)))throw Error('არასწორი რემაინდერი');rids.add(r.id);}
+ if(s.settings.notifications){const n=s.settings.notifications;if(typeof n.enabled!=='boolean'||!Array.isArray(n.leadDays)||n.leadDays.some(d=>!Number.isInteger(d)||d<0||d>31)||!Number.isInteger(n.hour)||n.hour<0||n.hour>23||!['America/New_York','Asia/Tbilisi'].includes(n.timezone))throw Error('არასწორი შეტყობინებების პარამეტრები');}
  if(!(s.settings.creditLimit>0)||!Number.isFinite(s.settings.creditLimit)||!Number.isFinite(s.settings.creditTarget)||s.settings.creditTarget<0||s.settings.creditTarget>100)throw Error('არასწორი ლიმიტი / სამიზნე');
  if(!s.base||!validDate(s.base.as_of)||!['debit','credit','georgia'].every(k=>typeof s.base[k]==='number'&&Number.isFinite(s.base[k])))throw Error('საწყისი ბალანსი აკლია');
  if(s.settings.budgets&&Object.values(s.settings.budgets).some(n=>typeof n!=='number'||!Number.isFinite(n)||n<0))throw Error('არასწორი ბიუჯეტი');
@@ -42,7 +43,7 @@ class Store{
  const tx=this.db.transaction('history','readwrite'),finished=done(tx);for(const e of rows)if(!keep.has(e.backupId))tx.objectStore('history').delete(e.backupId);await finished;
  }
 }
-function balances(s,today){const b={debit:cents(s.base.debit),credit:cents(s.base.credit),georgia:cents(s.base.georgia)};for(const e of s.data){if(!validDate(e.date)||e.date<=s.base.as_of||e.date>today)continue;const a=cents(e.amount);if(e.type==='income')b.debit+=a;if(['debit_expense','transfer_georgia','credit_payment'].includes(e.type))b.debit-=a;if(e.type==='credit_expense')b.credit+=a;if(e.type==='credit_payment')b.credit-=a;if(e.type==='transfer_georgia')b.georgia+=cents(e.gelAmount||0);if(e.type==='georgia_expense')b.georgia-=a;}return Object.fromEntries(Object.entries(b).map(([k,v])=>[k,v/100]));}
+function balances(s,today){const b={debit:cents(s.base.debit),credit:cents(s.base.credit),georgia:cents(s.base.georgia)};for(const e of s.data){if(!validDate(e.date)||e.date<=s.base.as_of||e.date>today)continue;const a=cents(e.amount);if(e.type==='income')b.debit+=a;if(['debit_expense','transfer_georgia','credit_payment'].includes(e.type))b.debit-=a;if(e.type==='credit_expense')b.credit+=a;if(e.type==='credit_payment')b.credit-=a;if(e.type==='transfer_georgia')b.georgia+=cents(e.gelAmount||0);if(e.type==='georgia_expense')b.georgia-=a;if(e.type==='georgia_income')b.georgia+=a;}return Object.fromEntries(Object.entries(b).map(([k,v])=>[k,v/100]));}
 root.FinanceStorage={Store,validate,pack,unpack,validDate,balances,cents,clone,KEY};
 if(typeof module!=='undefined')module.exports=root.FinanceStorage;
 })(globalThis);
